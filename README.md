@@ -4,15 +4,6 @@ Este projeto explora o uso da biblioteca OpenCV, combinada com Python, para apli
 Finalidade
 O script main.py foi desenvolvido para carregar três imagens específicas — GIRAFA.jpeg, SATELITE.jpeg e AVIAO.jpeg — e aplicar um fluxo de tratamento personalizado para cada uma, com o objetivo de isolar e evidenciar o objeto central presente nelas.
 
-Conjunto de Imagens
-As seguintes imagens são processadas pelo script e estão localizadas na pasta figs/:
-
-GIRAFA.jpeg
-
-SATELITE.jpeg
-
-AVIAO.jpeg
-
 Estratégias Utilizadas
 Como cada imagem possui características visuais únicas — variações de contraste, iluminação ou fundo —, o script adota duas estratégias principais de processamento:
 
