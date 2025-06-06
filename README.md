@@ -1,106 +1,109 @@
-# Processamento de Imagens para Detecção de Contornos
+Detecção de Contornos com Processamento de Imagens
+Este projeto explora o uso da biblioteca OpenCV, combinada com Python, para aplicar técnicas variadas de processamento de imagem com o intuito de localizar e destacar os principais contornos de objetos em diferentes tipos de imagens.
 
-Este projeto demonstra diferentes técnicas de processamento de imagem usando OpenCV e Python para identificar e destacar o contorno principal de objetos em diferentes imagens.
+Finalidade
+O script main.py foi desenvolvido para carregar três imagens específicas — GIRAFA.jpeg, SATELITE.jpeg e AVIAO.jpeg — e aplicar um fluxo de tratamento personalizado para cada uma, com o objetivo de isolar e evidenciar o objeto central presente nelas.
 
-## Objetivo
+Conjunto de Imagens
+As seguintes imagens são processadas pelo script e estão localizadas na pasta figs/:
 
-O objetivo principal do script `main.py` é carregar imagens específicas (`GIRAFA.jpeg`, `SATELITE.jpeg`, `AVIAO.jpeg`) e aplicar um fluxo de processamento adequado para cada uma, visando isolar e desenhar o contorno do objeto de interesse principal.
+GIRAFA.jpeg
 
-## Imagens Processadas
+SATELITE.jpeg
 
-O script é configurado para processar as seguintes imagens localizadas no diretório `figs/`:
+AVIAO.jpeg
 
-1.  **`GIRAFA.jpeg`**
-    ![Girafa](final/girafa.png)
-2.  **`SATELITE.jpeg`**
-    ![Satelite](final/satelite.png)
-3.  **`AVIAO.jpeg`**
-    ![Aviao](final/aviao.png)
+Estratégias Utilizadas
+Como cada imagem possui características visuais únicas — variações de contraste, iluminação ou fundo —, o script adota duas estratégias principais de processamento:
 
-## Abordagens de Processamento
+Limiarização (Thresholding)
 
-Devido às características distintas de cada imagem (contraste, iluminação, complexidade do fundo), duas abordagens principais são utilizadas, configuradas através de parâmetros no script:
+Detecção de Bordas com Canny
 
-1.  **Baseada em Thresholding (Limiarização)**
-2.  **Baseada em Detecção de Bordas (Canny)**
+A escolha da técnica depende da imagem, sendo definida por parâmetros ajustáveis no próprio código.
 
-### 1. Abordagem Baseada em Thresholding
+1. Técnica de Thresholding
+Usada nas imagens GIRAFA.jpeg e SATELITE.jpeg, essa abordagem busca separar o objeto principal do plano de fundo com base nos níveis de intensidade dos pixels.
 
-Esta abordagem é usada para a `GIRAFA.jpeg` e `SATELITE.jpeg`. O objetivo é segmentar a imagem em primeiro plano (objeto) e fundo com base na intensidade dos pixels.
+Etapas do processo:
 
-**Passos:**
+Conversão de Formato:
+A imagem é inicialmente lida no formato BGR, convertida para RGB (para compatibilidade com o Matplotlib) e depois para tons de cinza, já que o thresholding funciona melhor em uma única faixa de intensidade.
 
-1.  **Carregamento e Pré-processamento:**
-    *   A imagem é carregada no formato BGR.
-    *   Convertida para RGB (útil para exibição correta com Matplotlib, embora a exibição intermediária tenha sido removida na versão final).
-    *   Convertida para **Escala de Cinza**, pois as operações de thresholding geralmente trabalham em um único canal.
+Desfoque Gaussiano:
+Aplica-se um filtro Gaussiano para suavizar a imagem, o que ajuda a reduzir ruídos e evitar a detecção de contornos irrelevantes.
 
-2.  **Suavização (GaussianBlur):**
-    *   Um filtro Gaussiano é aplicado para reduzir ruídos e suavizar a imagem. Isso ajuda a evitar que o thresholding crie muitos pequenos contornos indesejados devido a variações mínimas de intensidade. O tamanho do kernel (ex: `(5, 5)`) controla a intensidade do blur.
+Aplicação do Threshold:
 
-3.  **Limiarização (Thresholding):**
-    *   Converte a imagem em escala de cinza para uma imagem **binária** (preto e branco). O objetivo é fazer o objeto de interesse ficar branco e o fundo preto (ou vice-versa).
-    *   **Global (Otsu):** Usado para a `GIRAFA.jpeg`. O método `THRESH_BINARY + THRESH_OTSU` assume que o objeto é mais claro que o fundo e calcula automaticamente um limiar global ótimo para separar os dois.
-    *   **Adaptativo:** Usado para a `SATELITE.jpeg`. O método `cv2.adaptiveThreshold` com `ADAPTIVE_THRESH_GAUSSIAN_C` calcula um limiar diferente para cada pequena região da imagem, baseado na média ponderada gaussiana da vizinhança. Isso é útil para imagens com iluminação não uniforme. `THRESH_BINARY` é usado para tornar as regiões claras (como o satélite) brancas. Parâmetros como `adaptive_blockSize` (tamanho da vizinhança) e `adaptive_C` (constante de ajuste) são cruciais.
+Global (Otsu): Ideal para imagens como a da girafa, onde o contraste entre objeto e fundo é nítido. O método Otsu encontra automaticamente um valor de corte adequado.
 
-4.  **Operações Morfológicas:**
-    *   Aplicadas na imagem binária para limpar "ruídos" resultantes do thresholding.
-    *   `cv2.MORPH_OPEN`: Remove pequenos pontos brancos isolados (ruído). Usado para o `SATELITE.jpeg` após o threshold adaptativo.
-    *   `cv2.MORPH_CLOSE`: Preenche pequenos buracos pretos dentro de objetos brancos. (Não usado ativamente na configuração final, mas foi testado).
-    *   O tamanho do `kernel` e o número de `iterations` controlam a intensidade da operação.
+Adaptativo: Preferido para a imagem do satélite, que possui iluminação irregular. O threshold adaptativo calcula valores locais com base na vizinhança de cada pixel, permitindo uma segmentação mais precisa.
 
-5.  **Detecção de Contornos (`cv2.findContours`):**
-    *   Identifica os limites das formas brancas na imagem binária limpa. `RETR_EXTERNAL` busca apenas os contornos mais externos.
+Tratamento Morfológico:
+Operações como abertura (MORPH_OPEN) são utilizadas para eliminar ruídos remanescentes na imagem binarizada, especialmente em áreas pequenas e isoladas.
 
-6.  **Seleção e Desenho:**
-    *   Os contornos encontrados são geralmente ordenados por área.
-    *   Para a `GIRAFA.jpeg`, o maior contorno é selecionado e desenhado na imagem original.
-    *   Para o `SATELITE.jpeg` (com threshold adaptativo), os 3 maiores contornos são desenhados para aumentar a chance de visualizar o satélite, mesmo que não seja o maior objeto detectado.
+Extração de Contornos:
+Utiliza-se cv2.findContours com o modo RETR_EXTERNAL para obter apenas os contornos externos das formas brancas resultantes do threshold.
 
-### 2. Abordagem Baseada em Detecção de Bordas (Canny)
+Seleção e Desenho:
+Após extrair os contornos:
 
-Esta abordagem é usada para a `AVIAO.jpeg`, onde o thresholding global ou adaptativo teve dificuldade em isolar o avião devido ao fundo complexo.
+Para a girafa, seleciona-se o maior contorno (provavelmente o corpo do animal).
 
-**Passos:**
+Para o satélite, os três maiores contornos são desenhados, aumentando as chances de capturar o objeto mesmo que ele não seja o mais dominante em área.
 
-1.  **Carregamento e Pré-processamento:**
-    *   Similar à abordagem de thresholding (BGR -> RGB -> Cinza).
+2. Técnica de Bordas com Canny
+Empregada na imagem do avião (AVIAO.jpeg), essa abordagem foi necessária devido à complexidade visual do fundo, onde a limiarização não funcionou bem.
 
-2.  **Suavização (GaussianBlur):**
-    *   Aplicada antes do Canny para reduzir ruído que poderia ser interpretado como bordas falsas.
+Etapas envolvidas:
 
-3.  **Detecção de Bordas (`cv2.Canny`):**
-    *   Algoritmo que detecta uma ampla gama de bordas na imagem com base em gradientes de intensidade. Utiliza dois limiares (`canny_thresh1` e `canny_thresh2`) para classificar as bordas como fortes ou fracas.
+Pré-processamento:
+Assim como na outra técnica, a imagem passa por conversões de cor e suavização com filtro Gaussiano.
 
-4.  **Dilatação (`cv2.dilate`):**
-    *   As bordas detectadas pelo Canny podem ser finas ou quebradas. A dilatação "engrossa" as linhas brancas das bordas, ajudando a conectar segmentos próximos e formar contornos mais fechados.
+Detecção com Canny:
+O algoritmo cv2.Canny é usado para identificar bordas baseando-se nos gradientes de intensidade. Dois limiares controlam a sensibilidade: um para bordas fortes e outro para fracas.
 
-5.  **Detecção de Contornos (`cv2.findContours`):**
-    *   Encontra os contornos nas bordas dilatadas.
+Dilatação das Bordas:
+As bordas detectadas são dilatadas com cv2.dilate para conectá-las melhor, criando contornos mais contínuos e fáceis de identificar.
 
-6.  **Filtragem de Contornos:**
-    *   Como Canny detecta muitas bordas (pista, árvore, nuvens), aplicamos filtros para selecionar apenas os contornos que provavelmente pertencem ao avião:
-        *   **Área Mínima (`contour_min_area`):** Ignora contornos muito pequenos (ruído).
-        *   **Posição Vertical (`contour_max_bottom_y_ratio`):** Ignora contornos cuja parte inferior esteja muito abaixo na imagem (ex: contornos da pista ou do horizonte baixo), assumindo que o avião estará mais acima.
+Extração e Filtro de Contornos:
+Após detectar os contornos:
 
-7.  **Desenho dos Contornos Filtrados:**
-    *   Todos os contornos que passam pelos filtros são desenhados na imagem original.
+Filtram-se os muito pequenos (área mínima).
 
-## Configuração por Imagem
+Ignoram-se contornos localizados muito próximos à base da imagem (assumindo que o avião está mais ao centro ou no topo).
 
-O script `main.py` utiliza um dicionário chamado `parametros_por_imagem`. Cada chave é o nome de um arquivo de imagem, e o valor é outro dicionário contendo os parâmetros específicos para aquela imagem. Isso inclui:
+Desenho Final:
+Os contornos que passam nos filtros são desenhados na imagem original, destacando as bordas relevantes do avião.
 
-*   `'metodo'`: Define qual abordagem usar (`'threshold'` ou `'canny'`).
-*   Parâmetros específicos para cada método (kernels de blur/morfologia, método/limiares de thresholding, limiares Canny, parâmetros de dilatação, filtros de contorno, etc.).
+Parâmetros Personalizados
+O script define um dicionário chamado parametros_por_imagem, onde cada imagem possui um conjunto de parâmetros personalizados:
 
-Isso permite ajustar finamente o processamento para obter o melhor resultado possível para cada imagem individualmente.
+Tipo de abordagem ('threshold' ou 'canny')
 
-## Execução
+Tamanhos de kernel
 
-Para executar o script e ver os resultados finais para cada imagem:
+Níveis de limiar
 
-```bash
+Configurações para operações morfológicas ou dilatação
+
+Filtros para selecionar contornos relevantes
+
+Esse sistema permite calibrar o processamento para cada imagem individualmente, garantindo maior precisão na detecção.
+
+Como Executar
+Para rodar o script e visualizar os resultados, utilize:
+
+bash
+Copy
+Edit
 python lab06/main.py
-```
+Pré-requisitos:
 
-Certifique-se de ter as bibliotecas OpenCV (`opencv-python`), NumPy e Matplotlib instaladas (`pip install opencv-python numpy matplotlib`) e que as imagens estejam no diretório `lab06/figs`.
+Certifique-se de que as bibliotecas necessárias estão instaladas:
+
+bash
+Copy
+Edit
+pip install opencv-python numpy matplotlib
+E mantenha as imagens no caminho lab06/figs.
